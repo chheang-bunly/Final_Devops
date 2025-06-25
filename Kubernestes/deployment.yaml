@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel-app
+  template:
+    metadata:
+      labels:
+        app: laravel-app
+    spec:
+      containers:
+      - name: web
+        image: php:8.2-fpm
+        ports:
+        - containerPort: 8080  # NGINX will expose 8080
+        - containerPort: 22    # SSH port
+        volumeMounts:
+        - name: app-code
+          mountPath: /var/www/html
+        command: ["sh", "-c", "
+          apt-get update && apt-get install -y nginx git openssh-server &&
+          mkdir /var/run/sshd &&
+          git clone https://github.com/Ingchhy/Final_DevOPs.git /var/www/html &&
+          service ssh start &&
+          nginx -g 'daemon off;' "]
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_DATABASE
+          value: "laravel"
+        - name: MYSQL_USER
+          value: "ING"
+        - name: MYSQL_PASSWORD
+          value: "123"
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword"
+        ports:
+        - containerPort: 3306
+      volumes:
+      - name: app-code
+        emptyDir: {}

@@ -1,0 +1,32 @@
+- name: Deploy Laravel app
+  hosts: web
+  tasks:
+    - name: Git pull
+      ansible.builtin.git:
+        repo: https://github.com/yourusername/terrain-booking.git
+        dest: /var/www/html
+        force: yes
+
+    - name: Install composer dependencies
+      shell: |
+        cd /var/www/html
+        composer config -g repo.packagist composer http://203.95.199.55:8081/repository/composer-proxy-i4/
+        composer install --no-interaction
+
+    - name: Install npm dependencies & build
+      shell: |
+        cd /var/www/html
+        npm config set registry http://203.95.199.55:8081/repository/npm-group-i4/
+        npm install
+        npm run build
+
+    - name: Run Pest tests
+      shell: |
+        cd /var/www/html
+        php artisan config:clear
+        php artisan migrate:fresh --env=testing
+        ./vendor/bin/pest
+
+    - name: Backup MySQL database
+      shell: |
+        mysqldump -u root -pHello@123 sereyrith-db > /var/www/html/backup.sql
